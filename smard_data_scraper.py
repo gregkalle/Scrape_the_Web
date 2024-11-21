@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 import pandas as pd
 
 #power plant types
-POWERPLANT_TYPES=["1004066","1001226","1001225","1004067","1004068","1001228","1001223","1004069","1004071","1004070","1001227"]
+POWERPLANT_TYPES=[1004066,1001226,1001225,1004067,1004068,1001228,1001223,1004069,1004071,1004070,1001227]
 TIME_ITEMS_NUMBER = 2
 
 class SmardDataScraper:
@@ -16,16 +16,18 @@ class SmardDataScraper:
             plant_types = POWERPLANT_TYPES
         self.__current_page = 1
         self.__item_number = len(plant_types)+TIME_ITEMS_NUMBER
-        self.__driver = webdriver.Chrome()
+        options = webdriver.ChromeOptions()
+        options.add_argument("--start-maximized")
+        self.__driver = webdriver.Chrome(options=options)
 
         start,end = self.__get_start_end()
         self.__url = self.__get_url(start,end,resolution,region,plant_types)
         self.__driver.get(self.__url)
-        self.__driver.implicitly_wait(1)
+        time.sleep(2)
         self.__driver.find_element(by=By.CLASS_NAME,value="js-cookie-decline").click()
-        self.__driver.implicitly_wait(1)
+        time.sleep(2)
 
-    def __get_url(self,start,end,resolution,region,plant_types):
+    def __get_url(self,start:int,end:int,resolution:str,region:str,plant_types:list[int])->str:
         url = "https://www.smard.de/page/home/marktdaten/"\
         f"78?marketDataAttributes=%7B%22resolution%22:%22{resolution}%22"\
         f",%22region%22:%22{region}%22,%22from%22:"\
@@ -34,7 +36,7 @@ class SmardDataScraper:
         ":false,%22style%22:%22color%22,%22categoriesModuleOrder%22:%7B%7D%7D"
         return url
 
-    def __get_start_end(self):
+    def __get_start_end(self)->tuple[int]:
         end = date.today()
         start = end - timedelta(days=1)
 
@@ -42,29 +44,25 @@ class SmardDataScraper:
         start = time.mktime(start.timetuple())*1000
         return start,end
 
-    @property
-    def driver(self):
-        return self.__driver
-
-    def quit(self):
+    def __quit(self):
         self.__driver.quit()
 
-    def next_page(self):
+    def __next_page(self):
         self.__current_page +=1
         page_name = f"Seite {self.__current_page}"
         try:
             self.__driver.find_element(By.XPATH,f"//li[@title='{page_name}']").click()
         except (ElementClickInterceptedException, NoSuchElementException) as exc:
-            self.quit()
+            self.__quit()
             raise ElementClickInterceptedException("Element not clickable.") from exc
-        self.__driver.implicitly_wait(1)
+        time.sleep(2)
 
-    def get_columns(self):
+    def __get_columns(self)->list[str]:
         table = self.__driver.find_element(by=By.CLASS_NAME,value="c-chart-table__container")
         column_names = table.find_elements(by=By.CLASS_NAME,value="c-chart-table__head")
         return [name.text for name in column_names]
 
-    def get_table_items(self):
+    def __get_table_items(self):
         table = self.__driver.find_element(by=By.CLASS_NAME,value="c-chart-table__container")
         elements = table.find_elements(by=By.CLASS_NAME,value="c-chart-table__element")
         for i in range(0,len(elements),self.__item_number):
@@ -74,11 +72,11 @@ class SmardDataScraper:
 
     @property
     def dataframe(self):
-        columns = self.get_columns()
+        columns = self.__get_columns()
         data_items = []
         try:
             while True:
-                data_items += list(self.get_table_items())
-                self.next_page
+                data_items.extend(list(self.__get_table_items()))
+                self.__next_page()
         except ElementClickInterceptedException:
             return pd.DataFrame(data=data_items,columns=columns)
