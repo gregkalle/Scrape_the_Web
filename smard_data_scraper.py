@@ -1,14 +1,21 @@
 import time
 from datetime import date, timedelta
+from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+import pandas as pd
 
 #power plant types
 POWERPLANT_TYPES=["1004066","1001226","1001225","1004067","1004068","1001228","1001223","1004069","1004071","1004070","1001227"]
+TIME_ITEMS_NUMBER = 2
 
 class SmardDataScraper:
 
-    def __init__(self,resolution = "hour",region ="DE",plant_types = POWERPLANT_TYPES):
+    def __init__(self,resolution = "hour",region ="DE",plant_types = None):
+        if plant_types is None:
+            plant_types = POWERPLANT_TYPES
+        self.__current_page = 1
+        self.__item_number = len(plant_types)+TIME_ITEMS_NUMBER
         self.__driver = webdriver.Chrome()
 
         start,end = self.__get_start_end()
@@ -43,72 +50,35 @@ class SmardDataScraper:
         self.__driver.quit()
 
     def next_page(self):
-        self.__driver.find_element(by=By.CLASS_NAME,value="js-cookie-decline").click()
+        self.__current_page +=1
+        page_name = f"Seite {self.__current_page}"
+        try:
+            self.__driver.find_element(By.XPATH,f"//li[@title='{page_name}']").click()
+        except (ElementClickInterceptedException, NoSuchElementException) as exc:
+            self.quit()
+            raise ElementClickInterceptedException("Element not clickable.") from exc
         self.__driver.implicitly_wait(1)
 
     def get_columns(self):
         table = self.__driver.find_element(by=By.CLASS_NAME,value="c-chart-table__container")
         column_names = table.find_elements(by=By.CLASS_NAME,value="c-chart-table__head")
-        return [name.text for name in column_names if not name.text == "in MWh"]
-    
+        return [name.text for name in column_names]
+
     def get_table_items(self):
         table = self.__driver.find_element(by=By.CLASS_NAME,value="c-chart-table__container")
         elements = table.find_elements(by=By.CLASS_NAME,value="c-chart-table__element")
-        return [value.text for value in elements]
+        for i in range(0,len(elements),self.__item_number):
+            res1 = [value.text for value in elements[i:i+TIME_ITEMS_NUMBER]]
+            res2 = [float(value.text.replace(".","_").replace(",",".")) for value in elements[i+TIME_ITEMS_NUMBER:i+self.__item_number]]
+            yield res1+res2
 
-
-
-
-
-driver = webdriver.Chrome()
-
-start = 1732057200_000
-end = 1732143599_999
-
-url = "https://www.smard.de/page/home/marktdaten/"\
-        "78?marketDataAttributes=%7B%22resolution%22:%22hour%22"\
-        ",%22region%22:%22DE%22,%22from%22:"\
-        f"{start},%22to%22:{end},%22moduleIds"\
-        "%22:%5B1000102,1000103,1000104,1000108"\
-        ",1000109,1000110,1000111,1000112,1000113"\
-        ",1000121,1000101,1000100,5000410,1001226,"\
-        "1001228,1001227,1001223,1001224,1001225,1004066,1004067,1004069,"\
-        "1004071,1004070,1004068%5D,%22selectedCategory%22:1,%22activeChart%22"\
-        ":false,%22style%22:%22color%22,%22categoriesModuleOrder%22:%7B%7D%7D"
-
-driver.get(url=url)
-
-driver.implicitly_wait(1)
-
-cockie_button = driver.find_element(by=By.CLASS_NAME,value="js-cookie-decline")
-
-cockie_button.click()
-
-table = driver.find_element(by=By.CLASS_NAME,value="c-chart-table__container")
-
-elements_1 = table.find_elements(by=By.CLASS_NAME,value="c-chart-table__element")
-
-column_names = table.find_elements(by=By.CLASS_NAME,value="c-chart-table__head")
-
-for e in elements_1:
-    print(e.text)
-
-
-
-button = driver.find_element(by=By.CLASS_NAME,value="next")
-
-
-
-driver.implicitly_wait(1)
-
-button.click()
-
-
-table = driver.find_element(by=By.CLASS_NAME,value="c-chart-table__container")
-
-elements_2 = table.find_elements(by=By.CLASS_NAME,value="c-chart-table__element")
-
-for e in elements_2:
-    print(e.text)
-
-driver.quit()
+    @property
+    def dataframe(self):
+        columns = self.get_columns()
+        data_items = []
+        try:
+            while True:
+                data_items += list(self.get_table_items())
+                self.next_page
+        except ElementClickInterceptedException:
+            return pd.DataFrame(data=data_items,columns=columns)
