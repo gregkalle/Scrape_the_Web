@@ -11,9 +11,11 @@ URL:str = "https://www.smard.de/"
 class DataCollector:
 
     def __init__(self, path:str = None, group_names:tuple[str]=None, url:str = None):
-        if path is None:
+        self.path = path
+        if self.path is None:
             self.path = PATH
-        if group_names is None:
+        self.group_names = group_names
+        if self.group_names is None:
             self.group_names = GROUP_NAMES
         if url is None:
             url = URL
@@ -61,7 +63,7 @@ class DataCollector:
                 dataset = group.create_dataset(name=data_name,data=data,shape=(len(data),len(data[0])))
                 dataset.attrs["inititialisation"] = data_date.timetuple()
 
-    def store_changes_to_day_before(self, data_date:date = None, offset:int = 0)->None:
+    def store_changes_to_day_before(self, data_date:date = None, offset:int = 2)->None:
 
         if data_date is None:
             data_date = date.today()
@@ -86,7 +88,7 @@ class DataCollector:
             data_day_before = group_data[name_day_before][()]
             
             changes = self.calculate_difference(data[:,offset:],data_day_before[:,offset:])
-            data_changes = np.append(data[:,:offset],changes)
+            data_changes = np.append(data[:,:offset],changes,axis=1)
 
             dataset = group_changes.create_dataset(name=data_name,data=data_changes,shape=(len(data_changes),len(data_changes[0])))
             dataset.attrs["inititialisation"] = data_date.timetuple()
@@ -98,3 +100,14 @@ class DataCollector:
     def is_stored(self, the_time:int)->bool:
         with h5py.File(self.path, "r") as file:
             return str(the_time) in file[self.group_names[0]][self.group_names[1]].keys()
+
+
+    def get_data(self, text:str)->np.array:
+        with h5py.File(self.path, "r") as file:
+            group_data = file[self.group_names[0]][self.group_names[1]]
+            group_changes = file[self.group_names[0]][self.group_names[2]]
+            if text in group_data:
+                return group_data[text][()]
+            if text in group_changes:
+                return group_changes[text][()]
+            raise ValueError("No dataset in database.")

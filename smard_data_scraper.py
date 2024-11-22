@@ -12,7 +12,7 @@ TIME_ITEMS_NUMBER = 2
 
 class SmardDataScraper:
 
-    def __init__(self,resolution = "hour",region ="DE",plant_types = None):
+    def __init__(self,resolution = "hour",region ="DE",plant_types = None, day:date=None):
         if plant_types is None:
             plant_types = POWERPLANT_TYPES
         self.__current_page = 1
@@ -21,7 +21,7 @@ class SmardDataScraper:
         options.add_argument("--start-maximized")
         self.__driver = webdriver.Chrome(options=options)
 
-        start,end = self.__get_start_end()
+        start,end = self.__get_start_end(day=day)
         self.__url = self.__get_url(start,end,resolution,region,plant_types)
         self.__driver.get(self.__url)
         self.__driver.implicitly_wait(10)
@@ -38,8 +38,10 @@ class SmardDataScraper:
         ":false,%22style%22:%22color%22,%22categoriesModuleOrder%22:%7B%7D%7D"
         return url
 
-    def __get_start_end(self)->tuple[int]:
-        end = date.today()
+    def __get_start_end(self, day:date= None)->tuple[int]:
+        if day is None:
+            day = date.today()
+        end = day
         start = end - timedelta(days=1)
 
         end = time.mktime(end.timetuple())*1000 - 1

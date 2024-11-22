@@ -1,24 +1,31 @@
 import time
-from datetime import date, datetime
+from datetime import date, timedelta
 import numpy as np
 import h5py
 from smard_data_scraper import SmardDataScraper
 from data_collector import DataCollector
 
-today = time.mktime(date.today().timetuple())
+today = date.today()
+yesterday = date.today() - timedelta(days=1)
+today = time.mktime(today.timetuple())
+yesterday = time.mktime(yesterday.timetuple())
 
 collector = DataCollector()
 
 if not collector.is_stored(today):
 
-    coll, data = SmardDataScraper().data
+    coll, data = SmardDataScraper(day=today).data
 
       
     #collector.store_column_names(coll)
 
-    collector.store_data(data=data)
+    collector.store_data(data=data,data_date=today)
 
     print("sucess")
 
 else:
     print("nothing stored")
+
+data = collector.get_data(str(yesterday)+str(today))
+
+print(data)
