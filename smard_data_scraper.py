@@ -1,8 +1,9 @@
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+import numpy as np
 import pandas as pd
 
 #power plant types
@@ -23,11 +24,12 @@ class SmardDataScraper:
         start,end = self.__get_start_end()
         self.__url = self.__get_url(start,end,resolution,region,plant_types)
         self.__driver.get(self.__url)
-        time.sleep(2)
+        self.__driver.implicitly_wait(10)
         self.__driver.find_element(by=By.CLASS_NAME,value="js-cookie-decline").click()
-        time.sleep(2)
+        self.__data = self.set_nparray()
 
     def __get_url(self,start:int,end:int,resolution:str,region:str,plant_types:list[int])->str:
+        plant_types = [str(element) for element in plant_types]
         url = "https://www.smard.de/page/home/marktdaten/"\
         f"78?marketDataAttributes=%7B%22resolution%22:%22{resolution}%22"\
         f",%22region%22:%22{region}%22,%22from%22:"\
@@ -55,23 +57,31 @@ class SmardDataScraper:
         except (ElementClickInterceptedException, NoSuchElementException) as exc:
             self.__quit()
             raise ElementClickInterceptedException("Element not clickable.") from exc
-        time.sleep(2)
 
     def __get_columns(self)->list[str]:
         table = self.__driver.find_element(by=By.CLASS_NAME,value="c-chart-table__container")
         column_names = table.find_elements(by=By.CLASS_NAME,value="c-chart-table__head")
-        return [name.text for name in column_names]
+        return np.array([name.text for name in column_names])
 
     def __get_table_items(self):
         table = self.__driver.find_element(by=By.CLASS_NAME,value="c-chart-table__container")
         elements = table.find_elements(by=By.CLASS_NAME,value="c-chart-table__element")
         for i in range(0,len(elements),self.__item_number):
-            res1 = [value.text for value in elements[i:i+TIME_ITEMS_NUMBER]]
-            res2 = [float(value.text.replace(".","_").replace(",",".")) for value in elements[i+TIME_ITEMS_NUMBER:i+self.__item_number]]
+
+
+            res1 = [self.__date_text_to_float(value.text) for value in elements[i:i+TIME_ITEMS_NUMBER]]
+            res2 = [float(value.text.replace(".","").replace(",",".")) for value in elements[i+TIME_ITEMS_NUMBER:i+self.__item_number]]
             yield res1+res2
 
+    def __date_text_to_float(self,text:str)->float:
+        date_value = datetime(day=int(text[0:2]),month=int(text[3:5]),year=int(text[6:10]),hour=int(text[-5:-3]),minute=int(text[-2:]))
+        return float(time.mktime(date_value.timetuple()),)
+
     @property
-    def dataframe(self):
+    def data(self)->tuple[np.array]:
+        return self.__data
+
+    def set_nparray(self)->tuple[np.array]:
         columns = self.__get_columns()
         data_items = []
         try:
@@ -79,4 +89,4 @@ class SmardDataScraper:
                 data_items.extend(list(self.__get_table_items()))
                 self.__next_page()
         except ElementClickInterceptedException:
-            return pd.DataFrame(data=data_items,columns=columns)
+            return np.array(columns), np.array(data_items,dtype=np.float32)
