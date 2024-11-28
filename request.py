@@ -2,7 +2,7 @@ import numpy as np
 import requests
 from bs4 import BeautifulSoup
 
-LEN_F0 = 2
+LEN_F0 = 3
 LEN_F1 = 3
 
 def get_float(text:str)->float:
@@ -31,10 +31,10 @@ column_names = np.array(column_names, dtype="U20")
 data=[]
 
 for row in table.find("tbody").find_all("tr"):
-    row_data = [list(text.stripped_strings)[0] for text in row.find_all("td") if text.getText(strip=True)]
     string_data = []
     float_data = []
-    for i,text in enumerate(row_data):
+    for i,element in enumerate(row.find_all("td")):
+        text = list(element.stripped_strings)[0] if element.getText(strip=True) else ""
         if i<LEN_F0:
             string_data.append(text)
         elif i>= LEN_F0:
