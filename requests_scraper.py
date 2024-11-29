@@ -126,4 +126,7 @@ class RequestsScraper():
             data.append((tuple(string_data),tuple(float_data)))
 
         data_type = np.dtype([("","U20",(num_string_cols,)),("","f4",(num_float_cols,))])
-        return np.array(data, dtype=data_type)
+        try:
+            return np.array(data, dtype=data_type)
+        except ValueError as exc:
+            raise ValueError(exc, "have to change column numbers") from exc
