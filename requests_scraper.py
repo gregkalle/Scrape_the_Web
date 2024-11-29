@@ -1,3 +1,4 @@
+from datetime import datetime
 import numpy as np
 import requests
 from bs4 import BeautifulSoup
@@ -9,6 +10,7 @@ class RequestsScraper():
     def __init__(self,name:str, url:str, table_class_name:str, is_german:bool, num_string_cols:int, num_float_cols:int):
         self.__name = name
         self.__page = RequestsScraper.get_page(url)
+        self.__scraping_time = datetime.now()
         self.__column_names = RequestsScraper.get_column_names(self.__page,table_name=table_class_name)
         self.__data_array = RequestsScraper.get_table_data(self.__page,table_name=table_class_name,
                                                          num_string_cols=num_string_cols,
@@ -27,6 +29,10 @@ class RequestsScraper():
     @property
     def data_array(self):
         return self.__data_array
+
+    @property
+    def scraping_time(self):
+        return self.__scraping_time
 
     @staticmethod
     def get_page(url:str)->BeautifulSoup:
