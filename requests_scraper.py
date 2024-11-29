@@ -39,8 +39,7 @@ class RequestsScraper():
         page = requests.get(url=url,timeout=10)
 
         if not page.status_code == 200:
-            print(page.status_code)
-            raise requests.ConnectionError("Connection faild.")
+            raise requests.ConnectionError(f"Connection faild. Code: {page.status_code}")
 
         return BeautifulSoup(page.content,features="lxml")
 
