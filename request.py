@@ -1,21 +1,31 @@
 import numpy as np
 import requests
 from bs4 import BeautifulSoup
+from functions import get_float, get_point_deci
+
+
+class RequestsScraper():
+
+    def __init__(self,name:str, url:str, table_class_name:str, is_german:bool, num_string_cols:int, num_float_cols:int):
+        self.url = url
+        self.table_class_name = table_class_name
+        self.is_german = is_german
+        self.num_string_cols = num_string_cols
+        self.num_float_cols = num_float_cols
+        
 
 LEN_F0 = 3
 LEN_F1 = 3
 
-def get_float(text:str)->float:
-    digits = "".join([letter for letter in text if letter.isdigit() or letter in [".","-"]])
-    try:
-        return float(digits)
-    except ValueError as exc:
-        raise ValueError("Not a float.") from exc
-    
+   
 url = "https://finance.yahoo.com/markets/currencies/"
 class_name = "markets-table"
 
 page = requests.get(url=url,timeout=10)
+
+if not page.status_code == 200:
+    print(page.status_code)
+    raise requests.ConnectionError("Connection faild.")
 
 soup = BeautifulSoup(page.content,features="lxml")
 
