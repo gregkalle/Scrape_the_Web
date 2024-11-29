@@ -1,51 +1,56 @@
 from datetime import date, timedelta
-import time
 import numpy as np
+import time
 import h5py
 
 
-GROUP_NAMES:tuple[str] = ("smard_data","data_from_date","changes_to_day_before")
-PATH:str = "smard_date.h5"
-URL:str = "https://www.smard.de/"
+
+GROUP_NAMES:dict[str:str] = {"SMARD.DE":"https://www.smard.de/",
+                             "finance.yahoo.com":"https://finance.yahoo.com",
+                             "divi Register":"https://www.intensivregister.de/",
+                             "dwd":"https://www.dwd.de"
+                            }
+PARENT_NAME:str ="webpages to be informed"
+PATH:str = "webpage_date.h5"
 
 class DataCollector:
 
-    def __init__(self, path:str = None, group_names:tuple[str]=None, url:str = None):
+    def __init__(self, path:str = None,parent_name:str = None, group_names:dict[str:str]=None):
+        if path is None:
+            path = PATH
         self.path = path
-        if self.path is None:
-            self.path = PATH
+        if parent_name is None:
+            parent_name = PARENT_NAME
+        self.parent_name = parent_name
+        if group_names is None:
+            group_names = GROUP_NAMES
         self.group_names = group_names
-        if self.group_names is None:
-            self.group_names = GROUP_NAMES
-        if url is None:
-            url = URL
 
-        with h5py.File(self.path, "a") as file:
+        with h5py.File(self.path,"a") as file:
 
-            if not self.group_names[0] in file.keys():
-                root_group = file.create_group(name=self.group_names[0])
-                root_group.attrs["name"] = self.group_names[0]
-                root_group.attrs["url"] = url
-                root_group.attrs["description"] = "Actual net electricity generation "\
-                    "divided according to source of energy generation [MWh]."
+            if not self.parent_name in file.keys():
+                root_group = file.create_group(name=self.parent_name)
+                root_group.attrs["name"] = self.parent_name
                 root_group.attrs["initialisation_date"] = date.today().timetuple()
             else:
-                root_group = file[self.group_names[0]]
+                root_group = file[self.parent_name]
 
-            for name in GROUP_NAMES[1:]:
+            for name in self.group_names:
                 if not name in root_group.keys():
                     group = root_group.create_group(name=name)
                     group.attrs["name"] = name
-                    group.attrs["url"] = "https://www.smard.de/"
+                    group.attrs["url"] = self.group_names[name]
                     group.attrs["initialisation_date"] = date.today().timetuple()
 
-    def store_column_names(self,column_names:np.array)->None:
+    def store_column_names(self,column_names:np.array,groupe_name:str)->None:
         with h5py.File(self.path, "a") as file:
-            if not "column_names" in file.keys():
-                column_names = column_names.astype(np.dtype.str)
-                dataset = file.create_dataset(name="column_names",data=column_names,dtype=h5py.string_dtype())
+            root_group = file[self.parent_name]
+            if not "column_names" in root_group.keys():
+                column_names = column_names
+                dataset = file.create_dataset(name="column_names",data=column_names)
                 dataset.attrs["name"] = "Column Names"
-                dataset.attrs["description"] = "The names of the columns of the data stored in the children databases."
+                dataset.attrs["description"] = "The names of the columns of the data."
+                dataset.attrs["initialisation_date"] = date.today().timetuple()
 
 
     def store_data(self, data:np.array, data_date:date = None)-> None:

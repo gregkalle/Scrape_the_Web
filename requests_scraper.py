@@ -2,10 +2,10 @@ from datetime import datetime
 import numpy as np
 import requests
 from bs4 import BeautifulSoup, element
-from functions import get_float, get_point_deci
+from functions import get_float, get_point_deci, get_start_end_time
+from scraper import Scraper
 
-
-class RequestsScraper():
+class RequestsScraper(Scraper):
     """_summary_
 
     Args:
@@ -24,10 +24,12 @@ class RequestsScraper():
 
     def __init__(self,name:str, url:str, table_class_name:str, is_german:bool, num_string_cols:int, num_float_cols:int):
         self.__name = name
-        self.__table = RequestsScraper.get_table(url=url,table_name=table_class_name)
+        start, end = get_start_end_time()
+        url.replace("START",str(start)).replace("END",str(end))
+        table = RequestsScraper.get_table(url=url,table_name=table_class_name)
         self.__scraping_time = datetime.now()
-        self.__column_names = RequestsScraper.get_column_names(table=self.__table)
-        self.__data_array = RequestsScraper.get_table_data(table=self.__table,
+        self.__column_names = RequestsScraper.get_column_names(table=table)
+        self.__data_array = RequestsScraper.get_table_data(table=table,
                                                          num_string_cols=num_string_cols,
                                                          num_float_cols=num_float_cols,
                                                          is_german=is_german

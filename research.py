@@ -1,7 +1,10 @@
 import time
 from datetime import date, timedelta
-from smard_data_scraper import SmardDataScraper
 from data_collector import DataCollector
+"""
+from selenium_scraper import SeleniumScraper
+from bs4 import BeautifulSoup
+import numpy as np
 
 today = date.today()
 yesterday = date.today() - timedelta(days=1)
@@ -27,3 +30,13 @@ else:
 data = collector.get_data(str(yesterday)+str(today))
 
 print(data)
+
+
+scraper = SeleniumScraper(name="divi Register", url="https://www.intensivregister.de/#/aktuelle-lage/laendertabelle",
+                          table_class_name="laendertabelle", is_german=True)
+
+
+print(scraper.data_array)
+"""
+
+collector = DataCollector()
