@@ -30,7 +30,6 @@ class DataCollector:
 
             if not self.parent_name in file.keys():
                 root_group = file.create_group(name=self.parent_name)
-                root_group.attrs["name"] = self.parent_name
                 root_group.attrs["initialisation_date"] = date.today().timetuple()
             else:
                 root_group = file[self.parent_name]
@@ -38,16 +37,16 @@ class DataCollector:
             for name in self.group_names:
                 if not name in root_group.keys():
                     group = root_group.create_group(name=name)
-                    group.attrs["name"] = name
                     group.attrs["url"] = self.group_names[name]
                     group.attrs["initialisation_date"] = date.today().timetuple()
 
     def store_column_names(self,column_names:np.array,group_name:str)->None:
         with h5py.File(self.path, "a") as file:
             group = file[self.parent_name][group_name]
-            if not "column_names" in group:
+            if not "column_names" in group.keys():
                 column_names = column_names
-                dataset = group.create_dataset(name="column_names",data=column_names)
+                dataset = group.create_dataset(name="column_names",data=column_names,
+                                               shape=column_names.shape)
                 dataset.attrs["description"] = "The names of the columns of the data."
                 dataset.attrs["initialisation_date"] = date.today().timetuple()
 
@@ -64,7 +63,8 @@ class DataCollector:
             group = file[self.parent_name][group_name]
 
             if not data_name in group.keys():
-                dataset = group.create_dataset(name=data_name,data=data)
+                dataset = group.create_dataset(name=data_name,data=data,
+                                               shape=data.shape)
                 dataset.attrs["inititialisation"] = data_date.timetuple()
 
     def get_data(self, group_name:str, data_date:date = None)->np.array:
@@ -78,10 +78,15 @@ class DataCollector:
                 return group[data_name][()]
             raise ValueError("No dataset in database.")
 
-    def is_saved(self, group_name:str, data_date:date)->bool:
+    def is_saved_data(self, group_name:str, data_date:date)->bool:
         if data_date is None:
             data_date = date.today()
         data_name = str(time.mktime(data_date.timetuple()))
         with h5py.File(self.path, "r") as file:
             group = file[self.parent_name][group_name]
             return data_name in group.keys()
+        
+    def is_saved_columns(self, group_name:str)->bool:
+        with h5py.File(self.path, "r") as file:
+            group = file[self.parent_name][group_name]
+            return "column_names" in group.keys()
