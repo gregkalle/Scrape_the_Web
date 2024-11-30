@@ -57,7 +57,7 @@ class DataCollector:
         if data_date is None:
             data_date = date.today()
 
-        data_name = data_date.timetuple()
+        data_name = str(time.mktime(data_date.timetuple()))
 
         with h5py.File(self.path, "a") as file:
             
@@ -67,55 +67,21 @@ class DataCollector:
                 dataset = group.create_dataset(name=data_name,data=data)
                 dataset.attrs["inititialisation"] = data_date.timetuple()
 
-    def store_changes_to_day_before(self, data_date:date = None, offset:int = 2)->None:
-
+    def get_data(self, group_name:str, data_date:date = None)->np.array:
+        
         if data_date is None:
             data_date = date.today()
-
-        name_date = str(time.mktime(data_date.timetuple()))
-        day_before = data_date - timedelta(days=1)
-        name_day_before = str(time.mktime(day_before.timetuple()))
-
-        data_name = name_day_before + name_date
-
-        with h5py.File(self.path, "a") as file:
-            group_data = file[self.group_names[0]][self.group_names[1]]
-            group_changes = file[self.group_names[0]][self.group_names[2]]
-
-            if data_name in group_changes.keys():
-                raise ValueError("Data is already saved.")
-            
-            if not name_day_before in group_data:
-                raise ValueError("No data of date before.")
-            
-            data = group_data[name_date][()]
-            data_day_before = group_data[name_day_before][()]
-            
-            changes = self.calculate_difference(data[:,offset:],data_day_before[:,offset:])
-            data_changes = np.append(data[:,:offset],changes,axis=1)
-
-            dataset = group_changes.create_dataset(name=data_name,data=data_changes,shape=(len(data_changes),len(data_changes[0])))
-            dataset.attrs["inititialisation"] = data_date.timetuple()
-
-
-    def calculate_difference(self, data:np.array, data_day_before:np.array)->np.array:
-        return np.subtract(data_day_before,data)
-
-    def is_stored(self, the_time:int)->bool:
+        data_name = str(time.mktime(data_date.timetuple()))
         with h5py.File(self.path, "r") as file:
-            return str(the_time) in file[self.group_names[0]][self.group_names[1]].keys()
-
-
-    def get_data(self, text:str)->np.array:
-        with h5py.File(self.path, "r") as file:
-            group_data = file[self.group_names[0]][self.group_names[1]]
-            group_changes = file[self.group_names[0]][self.group_names[2]]
-            if text in group_data:
-                return group_data[text][()]
-            if text in group_changes:
-                return group_changes[text][()]
+            group = file[self.parent_name][group_name]
+            if data_name in group.keys():
+                return group[data_name][()]
             raise ValueError("No dataset in database.")
 
-import numpy as np
-nparray = np.array([[1,2,3],[1,2,3],[1,2,3]])
-print(nparray.shape)
+    def is_saved(self, group_name:str, data_date:date)->bool:
+        if data_date is None:
+            data_date = date.today()
+        data_name = str(time.mktime(data_date.timetuple()))
+        with h5py.File(self.path, "r") as file:
+            group = file[self.parent_name][group_name]
+            return data_name in group.keys()
