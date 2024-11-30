@@ -72,7 +72,13 @@ class SeleniumScraper(Scraper):
                 column_names.extend([name.text]*int(name.get_dom_attribute("colspan")))
             elif name.text:
                 column_names.append(name.text)
-        return column_names
+        try:
+            return np.array(column_names,dtype="S20")
+        except UnicodeEncodeError:
+            array = np.array(column_names,dtype="U20")
+            array = np.char.encode(array, encoding="iso-8859-1")
+            return array.astype(dtype="S20")
+            
 
     @staticmethod
     def get_table_data(driver:WebDriver, table_name:str, is_german:bool, change_page_handler:str):
@@ -93,7 +99,7 @@ class SeleniumScraper(Scraper):
                 rows = body.find_elements(by=By.TAG_NAME,value="tr")
 
                 for row in rows:
-                    data_header = [table_header.text for table_header in row.find_elements(by=By.TAG_NAME,value="th")]
+                    data_header = [str(table_header.text) for table_header in row.find_elements(by=By.TAG_NAME,value="th")]
                     data_body = []
                     for table_data in row.find_elements(by=By.TAG_NAME,value="td"):
                         if table_data.text:
@@ -110,5 +116,13 @@ class SeleniumScraper(Scraper):
         len_f0 = len(data[0][0])
         len_f1 = len(data[0][1])
 
-        data_type = np.dtype([("","U20",(len_f0,)),("","f4",(len_f1,))])
-        return np.array(data, dtype=data_type)
+        data_type = np.dtype([("f0","S20",(len_f0,)),("f1","f4",(len_f1,))])
+        try:
+            return np.array(data, dtype=data_type)
+        except UnicodeEncodeError:
+            data_type2 = np.dtype([("f0","U20",(len_f0,)),("f1","f4",(len_f1,))])
+            array = np.array(data, dtype=data_type2)
+            array1 = np.char.encode(array["f0"], encoding='iso8859-1')
+            array1.astype(dtype="S20",copy=False)
+            array2 = array["f1"]
+            return np.concatenate((array1,array2),axis=1)

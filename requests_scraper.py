@@ -91,8 +91,13 @@ class RequestsScraper(Scraper):
             np.array: column names
         """
         head = table.find("thead")
-        column_names = [name.getText(strip=True) for name in head.find_all("th")]
-        return np.array(column_names, dtype="U20")
+        column_names = [str(name.getText(strip=True)) for name in head.find_all("th")]
+        try:
+            return np.array(column_names, dtype="S20")
+        except UnicodeEncodeError:
+            array = np.array(column_names,dtype="U20")
+            array = np.char.encode(array, encoding="iso-8859-1")
+            return array.astype(dtype="S20")
 
     @staticmethod
     def get_table_data(table:element.Tag, num_string_cols:int, num_float_cols:int, is_german:bool)->np.array:
@@ -127,8 +132,15 @@ class RequestsScraper(Scraper):
                     break
             data.append((tuple(string_data),tuple(float_data)))
 
-        data_type = np.dtype([("","U20",(num_string_cols,)),("","f4",(num_float_cols,))])
+        data_type = np.dtype([("","S20",(num_string_cols,)),("","f4",(num_float_cols,))])
         try:
             return np.array(data, dtype=data_type)
+        except UnicodeEncodeError:
+            data_type2 = np.dtype([("f0","U20",(num_string_cols,)),("f1","f4",(num_float_cols,))])
+            array = np.array(data, dtype=data_type2)
+            array1 = np.char.encode(array["f0"], encoding='iso8859-1')
+            array1.astype(dtype="S20",copy=False)
+            array2 = array["f1"]
+            return np.concatenate((array1,array2),axis=1)
         except ValueError as exc:
             raise ValueError(exc, "have to change column numbers") from exc
