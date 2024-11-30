@@ -42,30 +42,29 @@ class DataCollector:
                     group.attrs["url"] = self.group_names[name]
                     group.attrs["initialisation_date"] = date.today().timetuple()
 
-    def store_column_names(self,column_names:np.array,groupe_name:str)->None:
+    def store_column_names(self,column_names:np.array,group_name:str)->None:
         with h5py.File(self.path, "a") as file:
-            root_group = file[self.parent_name]
-            if not "column_names" in root_group.keys():
+            group = file[self.parent_name][group_name]
+            if not "column_names" in group:
                 column_names = column_names
-                dataset = file.create_dataset(name="column_names",data=column_names)
-                dataset.attrs["name"] = "Column Names"
+                dataset = group.create_dataset(name="column_names",data=column_names)
                 dataset.attrs["description"] = "The names of the columns of the data."
                 dataset.attrs["initialisation_date"] = date.today().timetuple()
 
 
-    def store_data(self, data:np.array, data_date:date = None)-> None:
+    def store_data(self, data:np.array, group_name:str, data_date:date = None)-> None:
         
         if data_date is None:
             data_date = date.today()
 
-        data_name = str(time.mktime(data_date.timetuple()))
+        data_name = data_date.timetuple()
 
         with h5py.File(self.path, "a") as file:
             
-            group = file[self.group_names[0]][self.group_names[1]]
+            group = file[self.parent_name][group_name]
 
             if not data_name in group.keys():
-                dataset = group.create_dataset(name=data_name,data=data,shape=(len(data),len(data[0])))
+                dataset = group.create_dataset(name=data_name,data=data)
                 dataset.attrs["inititialisation"] = data_date.timetuple()
 
     def store_changes_to_day_before(self, data_date:date = None, offset:int = 2)->None:
@@ -116,3 +115,7 @@ class DataCollector:
             if text in group_changes:
                 return group_changes[text][()]
             raise ValueError("No dataset in database.")
+
+import numpy as np
+nparray = np.array([[1,2,3],[1,2,3],[1,2,3]])
+print(nparray.shape)
