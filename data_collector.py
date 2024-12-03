@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime
 import numpy as np
 import time
 import h5py
@@ -11,7 +11,7 @@ GROUP_NAMES:dict[str:str] = {"SMARD.DE":"https://www.smard.de/",
                              "dwd":"https://www.dwd.de"
                             }
 PARENT_NAME:str ="webpages to be informed"
-PATH:str = "webpage_date.h5"
+PATH:str = "webpage_data.h5"
 
 class DataCollector:
 
@@ -51,7 +51,7 @@ class DataCollector:
                 dataset.attrs["initialisation_date"] = date.today().timetuple()
 
 
-    def store_data(self, data:np.array, group_name:str, data_date:date = None)-> None:
+    def store_data(self, data:np.array, group_name:str, scraping_time: datetime, data_date:date = None)-> None:
         
         if data_date is None:
             data_date = date.today()
@@ -65,6 +65,7 @@ class DataCollector:
             if not data_name in group.keys():
                 dataset = group.create_dataset(name=data_name,data=data,
                                                shape=data.shape)
+                dataset.attrs["scraping_time"] = str(scraping_time.timetuple())
                 dataset.attrs["inititialisation"] = data_date.timetuple()
 
     def get_data(self, group_name:str, data_date:date = None)->np.array:
@@ -77,6 +78,13 @@ class DataCollector:
             if data_name in group.keys():
                 return group[data_name][()]
             raise ValueError("No dataset in database.")
+        
+    def get_column_names(self, group_name:str)->np.array:
+        with h5py.File(self.path, "r") as file:
+            group = file[self.parent_name][group_name]
+            if "column_names" in group:
+                return group["column_names"][()]
+            raise ValueError(f"No column names in group {group_name}.")
 
     def is_saved_data(self, group_name:str, data_date:date)->bool:
         if data_date is None:

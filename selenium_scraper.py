@@ -10,14 +10,16 @@ from scraper import Scraper
 class SeleniumScraper(Scraper):
 
     def __init__(self,name:str, url:str, table_class_name:str, is_german:bool,
-                 cockie_handler:str = None, change_page_handler:str=None):
+                 cockie_handler:str = None, change_page_handler:str=None, encoding:str = None):
         self.__name = name
         start, end = get_start_end_time()
         url = url.replace("START",str(start)).replace("END",str(end))
         driver = self.get_driver(url=url, cockie_handler=cockie_handler)
         self.__scraping_time = datetime.now()
-        self.__column_names = SeleniumScraper.get_column_names(driver=driver, table_name=table_class_name)
-        self.__data_array = SeleniumScraper.get_table_data(driver=driver, table_name=table_class_name, is_german=is_german,change_page_handler=change_page_handler)
+        if encoding is None:
+            encoding = "UTF-8"
+        self.__column_names = SeleniumScraper.get_column_names(driver=driver, table_name=table_class_name,encoding=encoding)
+        self.__data_array = SeleniumScraper.get_table_data(driver=driver, table_name=table_class_name, is_german=is_german,change_page_handler=change_page_handler, encoding=encoding)
         driver.quit()
 
 
@@ -62,26 +64,21 @@ class SeleniumScraper(Scraper):
         raise NotImplemented
 
     @staticmethod
-    def get_column_names(driver:WebDriver, table_name:str)->np.array:
+    def get_column_names(driver:WebDriver, table_name:str, encoding:str)->np.array:
         table = driver.find_element(by=By.CLASS_NAME,value=table_name)
         head = table.find_element(by=By.TAG_NAME,value="thead")
         column_names = []
 
         for name in head.find_elements(by=By.TAG_NAME,value="th"):
             if name.text and not name.get_dom_attribute("colspan") is None:
-                column_names.extend([name.text]*int(name.get_dom_attribute("colspan")))
+                column_names.extend([name.text.encode(encoding=encoding)]*int(name.get_dom_attribute("colspan")))
             elif name.text:
-                column_names.append(name.text)
-        try:
-            return np.array(column_names,dtype="S20")
-        except UnicodeEncodeError:
-            array = np.array(column_names,dtype="U20")
-            array = np.char.encode(array, encoding="iso-8859-1")
-            return array.astype(dtype="S20")
+                column_names.append(name.text.encode(encoding=encoding))
+        return np.array(column_names,dtype="S20")
             
 
     @staticmethod
-    def get_table_data(driver:WebDriver, table_name:str, is_german:bool, change_page_handler:str):
+    def get_table_data(driver:WebDriver, table_name:str, is_german:bool, change_page_handler:str, encoding:str):
         if change_page_handler:
             num_pages, next_page_object, next_page_name = change_page_handler.split("|")
         else:
@@ -99,7 +96,7 @@ class SeleniumScraper(Scraper):
                 rows = body.find_elements(by=By.TAG_NAME,value="tr")
 
                 for row in rows:
-                    data_header = [str(table_header.text) for table_header in row.find_elements(by=By.TAG_NAME,value="th")]
+                    data_header = [str(table_header.text).encode(encoding=encoding) for table_header in row.find_elements(by=By.TAG_NAME,value="th")]
                     data_body = []
                     for table_data in row.find_elements(by=By.TAG_NAME,value="td"):
                         if table_data.text:
@@ -117,12 +114,4 @@ class SeleniumScraper(Scraper):
         len_f1 = len(data[0][1])
 
         data_type = np.dtype([("f0","S20",(len_f0,)),("f1","f4",(len_f1,))])
-        try:
-            return np.array(data, dtype=data_type)
-        except UnicodeEncodeError:
-            data_type2 = np.dtype([("f0","U20",(len_f0,)),("f1","f4",(len_f1,))])
-            array = np.array(data, dtype=data_type2)
-            array1 = np.char.encode(array["f0"], encoding='iso8859-1')
-            array1.astype(dtype="S20",copy=False)
-            array2 = array["f1"]
-            return np.concatenate((array1,array2),axis=1)
+        return np.array(data, dtype=data_type)

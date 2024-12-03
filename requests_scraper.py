@@ -22,17 +22,20 @@ class RequestsScraper(Scraper):
             data_array(np.array): table data
     """
 
-    def __init__(self,name:str, url:str, table_class_name:str, is_german:bool, num_string_cols:int, num_float_cols:int):
+    def __init__(self,name:str, url:str, table_class_name:str, is_german:bool, num_string_cols:int, num_float_cols:int, encoding:str = None):
         self.__name = name
         start, end = get_start_end_time()
         url.replace("START",str(start)).replace("END",str(end))
+        if encoding is None:
+            encoding = "UTF-8"
         table = RequestsScraper.get_table(url=url,table_name=table_class_name)
         self.__scraping_time = datetime.now()
-        self.__column_names = RequestsScraper.get_column_names(table=table)
+        self.__column_names = RequestsScraper.get_column_names(table=table,encoding=encoding)
         self.__data_array = RequestsScraper.get_table_data(table=table,
                                                          num_string_cols=num_string_cols,
                                                          num_float_cols=num_float_cols,
-                                                         is_german=is_german
+                                                         is_german=is_german,
+                                                         encoding=encoding
                                                          )
 
     @property
@@ -81,7 +84,7 @@ class RequestsScraper(Scraper):
         return soup.find(class_=table_name)
 
     @staticmethod
-    def get_column_names(table:element.Tag)->np.array:
+    def get_column_names(table:element.Tag, encoding:str)->np.array:
         """_summary_
 
         Args:
@@ -91,16 +94,13 @@ class RequestsScraper(Scraper):
             np.array: column names
         """
         head = table.find("thead")
-        column_names = [str(name.getText(strip=True)) for name in head.find_all("th")]
-        try:
-            return np.array(column_names, dtype="S20")
-        except UnicodeEncodeError:
-            array = np.array(column_names,dtype="U20")
-            array = np.char.encode(array, encoding="iso-8859-1")
-            return array.astype(dtype="S20")
+        column_names = [str(name.getText(strip=True)).encode(encoding=encoding) for name in head.find_all("th")]
+        
+        return np.array(column_names, dtype="S20")
+
 
     @staticmethod
-    def get_table_data(table:element.Tag, num_string_cols:int, num_float_cols:int, is_german:bool)->np.array:
+    def get_table_data(table:element.Tag, num_string_cols:int, num_float_cols:int, is_german:bool, encoding:str)->np.array:
         """_summary_
 
         Args:
@@ -120,7 +120,7 @@ class RequestsScraper(Scraper):
             for i,element in enumerate(row.find_all("td")):
                 text = list(element.stripped_strings)[0] if element.getText(strip=True) else ""
                 if i<num_string_cols:
-                    string_data.append(text)
+                    string_data.append(text.encode(encoding=encoding))
                 elif i>= num_string_cols:
                     text = get_point_deci(text=text,change_comma=is_german)
                     try:
@@ -133,14 +133,4 @@ class RequestsScraper(Scraper):
             data.append((tuple(string_data),tuple(float_data)))
 
         data_type = np.dtype([("","S20",(num_string_cols,)),("","f4",(num_float_cols,))])
-        try:
-            return np.array(data, dtype=data_type)
-        except UnicodeEncodeError:
-            data_type2 = np.dtype([("f0","U20",(num_string_cols,)),("f1","f4",(num_float_cols,))])
-            array = np.array(data, dtype=data_type2)
-            array1 = np.char.encode(array["f0"], encoding='iso8859-1')
-            array1.astype(dtype="S20",copy=False)
-            array2 = array["f1"]
-            return np.concatenate((array1,array2),axis=1)
-        except ValueError as exc:
-            raise ValueError(exc, "have to change column numbers") from exc
+        return np.array(data, dtype=data_type)

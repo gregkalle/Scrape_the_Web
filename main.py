@@ -1,6 +1,8 @@
-from datetime import date
+from datetime import date, datetime
+import time
 import csv
 import numpy as np
+from requests import RequestException
 from requests_scraper import RequestsScraper
 from selenium_scraper import SeleniumScraper
 from data_collector import DataCollector
@@ -8,7 +10,7 @@ from data_collector import DataCollector
 PARENT_NAME = "webpages to be informed"
 DATA_PATH = "webpage_data.csv"
 COLUMN_NAMES = ["name","url","method","page_handler","cockie_handler",
-                "table_name", "is_german", "num_str_cols","num_float_cols"]
+                "table_name", "is_german", "num_str_cols","num_float_cols","encoding"]
 
 def main():
 
@@ -28,35 +30,52 @@ def main():
 
     for key in wp_data:
         if not data_collector.is_saved_columns(group_name=key):
-            column_data, data = get_data(wp_data[key])
+            column_data, data, scraping_time = get_data(wp_data[key])
             data_collector.store_column_names(column_names=column_data, group_name=key)
-            data_collector.store_data(data=data, group_name=key,data_date=date_today)
+            data_collector.store_data(data=data,group_name=key,scraping_time=scraping_time,data_date=date_today)
 
         elif not data_collector.is_saved_data(key,data_date=date_today):
-            _, data = get_data(wp_data[key])
-            data_collector.store_data(data=data, group_name=key,data_date=date_today)
+            _, data, scraping_time = get_data(wp_data[key])
+            data_collector.store_data(data=data,group_name=key,scraping_time=scraping_time,data_date=date_today)
         
         else:
             print(f"{key} is saved in database at {str(date_today)}.")
 
 def get_data(data:dict[str])-> tuple[np.array]:
     if data["method"] == "SELENIUM":
-        scraper = SeleniumScraper(name=data["name"],url=data["url"],
-                                  table_class_name=data["table_name"],
-                                  is_german=data["is_german"],
-                                  cockie_handler=data["cockie_handler"],
-                                  change_page_handler=data["page_handler"]
-                                  )
-        return (scraper.column_names, scraper.data_array)
+        for i in range(5):
+            try:
+                scraper = SeleniumScraper(name=data["name"],url=data["url"],
+                                        table_class_name=data["table_name"],
+                                        is_german=data["is_german"],
+                                        cockie_handler=data["cockie_handler"],
+                                        change_page_handler=data["page_handler"],
+                                        encoding=data["encoding"]
+                                        )
+                return (scraper.column_names, scraper.data_array, scraper.scraping_time)
+            # Warning: unspecified error handling. 
+            except:
+                time.sleep(30)
+                continue
+        res = np.array(["no data after five scraping trys."],dtype="S35")
+        return res, res, datetime.now()
 
     if data["method"] == "REQUESTS":
-        scraper = RequestsScraper(name=data["name"],url=data["url"],
-                                  table_class_name=data["table_name"],
-                                  is_german=data["is_german"],
-                                  num_string_cols=int(data["num_str_cols"]),
-                                  num_float_cols=int(data["num_float_cols"])
-                                  )
-        return (scraper.column_names, scraper.data_array)
+        for i in range(5):
+            try:
+                scraper = RequestsScraper(name=data["name"],url=data["url"],
+                                        table_class_name=data["table_name"],
+                                        is_german=data["is_german"],
+                                        num_string_cols=int(data["num_str_cols"]),
+                                        num_float_cols=int(data["num_float_cols"]),
+                                        encoding=data["encoding"]
+                                        )
+                return (scraper.column_names, scraper.data_array, scraper.scraping_time)
+            except RequestException:
+                time.sleep(30)
+                continue
+        res = np.array(["no data after five scraping trys."],dtype="S35")
+        return res, res, datetime.now()
 
     
 
