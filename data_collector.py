@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import numpy as np
 import time
 import h5py
@@ -85,6 +85,13 @@ class DataCollector:
             if "column_names" in group:
                 return group["column_names"][()]
             raise ValueError(f"No column names in group {group_name}.")
+
+    def get_last_days_group_data(self, group_name:str, num_days:int = 7)->dict[date:np.array]:
+        last_weeks_dates = [str(time.mktime((date.today()-i*timedelta(days=1)).timetuple())) for i in range(num_days)]
+
+        with h5py.File(self.path, "r") as file:
+            group = file[self.parent_name][group_name]
+            return {date.fromtimestamp(float(name)) : group[name][()] for name in group.keys() if name in last_weeks_dates}
 
     def is_saved_data(self, group_name:str, data_date:date)->bool:
         if data_date is None:

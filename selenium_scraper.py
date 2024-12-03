@@ -100,9 +100,9 @@ class SeleniumScraper(Scraper):
                     data_body = []
                     for table_data in row.find_elements(by=By.TAG_NAME,value="td"):
                         if table_data.text:
-                            element_data = get_point_deci(table_data.text, change_comma=is_german)
+                            element_data = get_point_deci(table_data.text, change_comma=(is_german=="TRUE"))
                             try:
-                                element_data = get_float(get_point_deci(element_data))
+                                element_data = get_float(element_data)
                             except ValueError:
                                 element_data = None
                             data_body.append(element_data)

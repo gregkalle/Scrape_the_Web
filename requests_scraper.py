@@ -122,7 +122,7 @@ class RequestsScraper(Scraper):
                 if i<num_string_cols:
                     string_data.append(text.encode(encoding=encoding))
                 elif i>= num_string_cols:
-                    text = get_point_deci(text=text,change_comma=is_german)
+                    text = get_point_deci(text=text,change_comma=(is_german=="TRUE"))
                     try:
                         text = get_float(text=text)
                         float_data.append(text)
