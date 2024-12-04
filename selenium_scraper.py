@@ -43,6 +43,7 @@ class SeleniumScraper(Scraper):
     def get_driver(url:str, cockie_handler:str)->webdriver:
         options = webdriver.ChromeOptions()
         options.add_argument("--start-maximized")
+        options.add_argument("--headless=new")
         driver =  webdriver.Chrome(options=options)
         driver.get(url=url)
         driver.implicitly_wait(10)
