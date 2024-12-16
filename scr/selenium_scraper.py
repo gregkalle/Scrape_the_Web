@@ -8,18 +8,36 @@ from functions import get_float, get_point_deci, get_start_end_time
 from scraper import Scraper
 
 class SeleniumScraper(Scraper):
+    """A concrete implementation of the Scraper abstract base class using Selenium for web scraping.
+
+    Args:
+        name (str): The name of the webpage to scrape data from.
+        url (str): The URL to scrape data from.
+        table_class_name (str): The class name of the table to scrape.
+        is_german (bool): Whether the data is in German format (affects number parsing).
+        cockie_handler (str, optional): The handler for cookie acceptance. Defaults to None.
+        change_page_handler (str, optional): The handler for changing pages. Defaults to None.
+        encoding (str, optional): The encoding of the data. Defaults to None.
+    
+    Attributes:
+        name (str): The name of the scraped webpage.
+        scraping_time (datetime.datetime): The time when the data was scraped.
+        column_names (np.array): The column names of the data as a numpy array.
+        data_array (np.array): The data collected from the webpage as a numpy array.
+
+    """
 
     def __init__(self,name:str, url:str, table_class_name:str, is_german:bool,
                  cockie_handler:str = None, change_page_handler:str=None, encoding:str = None):
-        self.__name = name
+        self.__name:str = name
         start, end = get_start_end_time()
         url = url.replace("START",str(start)).replace("END",str(end))
         driver = self.get_driver(url=url, cockie_handler=cockie_handler)
-        self.__scraping_time = datetime.now()
+        self.__scraping_time:datetime = datetime.now()
         if encoding is None:
             encoding = "UTF-8"
-        self.__column_names = SeleniumScraper.get_column_names(driver=driver, table_name=table_class_name,encoding=encoding)
-        self.__data_array = SeleniumScraper.get_table_data(driver=driver, table_name=table_class_name, is_german=is_german,change_page_handler=change_page_handler, encoding=encoding)
+        self.__column_names:np.array = SeleniumScraper.get_column_names(driver=driver, table_name=table_class_name,encoding=encoding)
+        self.__data_array:np.array = SeleniumScraper.get_table_data(driver=driver, table_name=table_class_name, is_german=is_german,change_page_handler=change_page_handler, encoding=encoding)
         driver.quit()
 
 
@@ -40,7 +58,16 @@ class SeleniumScraper(Scraper):
         return self.__scraping_time
     
     @staticmethod
-    def get_driver(url:str, cockie_handler:str)->webdriver:
+    def get_driver(url:str, cockie_handler:str)->WebDriver:
+        """Initializes and returns a Selenium WebDriver.
+
+        Args:
+            url (str): The URL to navigate to.
+            cockie_handler (str): The handler for cookie acceptance.
+
+        Returns:
+            webdriver: The initialized WebDriver.
+        """
         options = webdriver.ChromeOptions()
         options.add_argument("--start-maximized")
         options.add_argument("--headless=new")
@@ -53,19 +80,47 @@ class SeleniumScraper(Scraper):
     
     @staticmethod
     def cockie_handling(driver:WebDriver, cockie_handler:str)->None:
+        """Handles cookie acceptance on the web page.
+
+        Args:
+            driver (WebDriver): The WebDriver instance.
+            cockie_handler (str): The handler for cookie acceptance.
+        """
         cockie_object, cockie_name = cockie_handler.split("|")
         driver.find_element(by=cockie_object,value=cockie_name).click()
 
     @staticmethod
     def next_page(driver:WebDriver, object_type:str, object_name:str):
+        """Navigates to the next page.
+
+        Args:
+            driver (WebDriver): The WebDriver instance.
+            object_type (str): The type of the object to interact with.
+            object_name (str): The name of the object to interact with.
+        """
         driver.find_element(by=object_type,value=object_name).click()
 
     @staticmethod
     def get_table():
+        """Placeholder for retrieving the table from the web page.
+
+        Raises:
+            NotImplemented: This method is not implemented.
+        """
         raise NotImplemented
 
     @staticmethod
     def get_column_names(driver:WebDriver, table_name:str, encoding:str)->np.array:
+        """Retrieves the column names from the table.
+
+        Args:
+            driver (WebDriver): The WebDriver instance.
+            table_name (str): The class name of the table.
+            encoding (str): The encoding of the data.
+
+        Returns:
+            np.array: The column names.
+        """
         table = driver.find_element(by=By.CLASS_NAME,value=table_name)
         head = table.find_element(by=By.TAG_NAME,value="thead")
         column_names = []
@@ -79,7 +134,19 @@ class SeleniumScraper(Scraper):
             
 
     @staticmethod
-    def get_table_data(driver:WebDriver, table_name:str, is_german:bool, change_page_handler:str, encoding:str):
+    def get_table_data(driver:WebDriver, table_name:str, is_german:bool, change_page_handler:str, encoding:str)->np.array:
+        """Retrieves the data from the table.
+
+        Args:
+            driver (WebDriver): The WebDriver instance.
+            table_name (str): The class name of the table.
+            is_german (bool): Whether the data is in German format.
+            change_page_handler (str): The handler for changing pages.
+            encoding (str): The encoding of the data.
+
+        Returns:
+            np.array: The table data.
+        """
         if change_page_handler:
             num_pages, next_page_object, next_page_name = change_page_handler.split("|")
         else:
