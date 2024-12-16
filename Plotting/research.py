@@ -2,8 +2,8 @@ import time
 from datetime import date, timedelta
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from data_collector import DataCollector
-from selenium_scraper import SeleniumScraper
+from scr.data_collector import DataCollector
+from scr.selenium_scraper import SeleniumScraper
 import numpy as np
 import h5py
 
