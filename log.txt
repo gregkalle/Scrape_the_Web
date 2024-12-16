@@ -1,5 +1,0 @@
-Script executed at "2024-12-16T11:38:09.538389":
-Write "SMARD.DE" on database from "2024-12-16T11:38:11.803177".
-Write "finance.yahoo.com" on database from "2024-12-16T11:38:21.525671".
-Write "divi Register" on database from "2024-12-16T11:38:23.398417".
-Write "dwd" on database from "2024-12-16T11:40:02.133941".
