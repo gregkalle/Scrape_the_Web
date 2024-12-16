@@ -2,8 +2,8 @@ from datetime import datetime
 import numpy as np
 import requests
 from bs4 import BeautifulSoup, element
-from scr.functions import get_float, get_point_deci, get_start_end_time
-from scr.scraper import Scraper
+from functions import get_float, get_point_deci, get_start_end_time
+from scraper import Scraper
 
 class RequestsScraper(Scraper):
     """_summary_

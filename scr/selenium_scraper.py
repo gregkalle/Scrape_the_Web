@@ -4,8 +4,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.webdriver import WebDriver
 import numpy as np
-from scr.functions import get_float, get_point_deci, get_start_end_time
-from scr.scraper import Scraper
+from functions import get_float, get_point_deci, get_start_end_time
+from scraper import Scraper
 
 class SeleniumScraper(Scraper):
 

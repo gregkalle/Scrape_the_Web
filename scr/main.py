@@ -3,9 +3,9 @@ import time
 import csv
 import numpy as np
 from requests import RequestException
-from scr.requests_scraper import RequestsScraper
-from scr.selenium_scraper import SeleniumScraper
-from scr.data_collector import DataCollector
+from requests_scraper import RequestsScraper
+from selenium_scraper import SeleniumScraper
+from data_collector import DataCollector
 
 PARENT_NAME = "webpages to be informed"
 DATA_PATH = "data/webpage_data.csv"
