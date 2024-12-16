@@ -29,24 +29,29 @@ def main():
           
     data_collector = DataCollector(path=PATH,parent_name=PARENT_NAME,group_names=GROUP_NAMES)
 
+    for name in GROUP_NAMES:
+        columns = data_collector.get_column_names(group_name=name)
+        print(columns)
 
-    data = data_collector.get_last_days_group_data(group_name="finance.yahoo.com")
+    data = data_collector.get_last_days_group_data(group_name="SMARD.DE")
+
+    print(data)
+
+    for key in data.keys():
+        print(key)
 
     days = list(data.keys())
 
-    days.append(days[0]+timedelta(days=1))
-    days.append(days[0]+timedelta(days=2))
 
-    data_array = data[days[0]]["f1"][:,0]
 
-    new = np.column_stack((data_array,data_array,data_array))
-    
-    
-    print(data[days[0]]["f0"][0,0].decode("UTF-8"))
+    data_array = np.column_stack([data[day]["f1"][:,0] for day in days])
+
+    print(data_array)
+
     
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d.%m.%Y'))
     plt.gca().xaxis.set_major_locator(mdates.DayLocator())
-    plt.plot(days,new[0,:],marker="o",linewidth=1.0)
+    plt.plot(days,data_array[5,:],marker="o",linewidth=1.0)
     plt.gcf().autofmt_xdate()
     plt.xlabel("Date")
     plt.ylabel("Value")
