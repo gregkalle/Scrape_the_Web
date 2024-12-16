@@ -65,7 +65,7 @@ class DataCollector:
             if not data_name in group.keys():
                 dataset = group.create_dataset(name=data_name,data=data,
                                                shape=data.shape)
-                dataset.attrs["scraping_time"] = str(scraping_time.timetuple())
+                dataset.attrs["scraping_time"] = scraping_time.isoformat()
                 dataset.attrs["inititialisation"] = data_date.timetuple()
 
     def get_data(self, group_name:str, data_date:date = None)->np.array:

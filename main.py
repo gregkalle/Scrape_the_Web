@@ -1,4 +1,5 @@
-from datetime import date, datetime
+import io
+from datetime import date, datetime, timedelta
 import time
 import csv
 import numpy as np
@@ -13,6 +14,17 @@ COLUMN_NAMES = ["name","url","method","page_handler","cockie_handler",
                 "table_name", "is_german", "num_str_cols","num_float_cols","encoding"]
 
 def main():
+    with open("log.txt","a+") as file:
+        file.write(f"Script executed at \"{datetime.now().isoformat()}\":\n")
+    prozessing_time = datetime.combine(date.today(), datetime.min.time()) + timedelta(hours=11, minutes=38)
+    while True:
+        if datetime.now() < prozessing_time:
+            print(f"Sleep until {prozessing_time}")
+            time.sleep((prozessing_time-datetime.now()).total_seconds())
+        prozessing_time = prozessing_time + timedelta(days=1)
+        collect()
+
+def collect():
 
     wp_data = {}
 
@@ -52,13 +64,13 @@ def get_data(data:dict[str])-> tuple[np.array]:
                                         change_page_handler=data["page_handler"],
                                         encoding=data["encoding"]
                                         )
+                log_file(name = data["name"], logging_datetime = scraper.scraping_time, success = True)
                 return (scraper.column_names, scraper.data_array, scraper.scraping_time)
             # Warning: unspecified error handling. 
             except:
                 time.sleep(30)
                 continue
-        res = np.array(["no data after five scraping trys."],dtype="S35")
-        return res, res, datetime.now()
+        log_file(name = data["name"], logging_datetime = datetime.now(), success = False)
 
     if data["method"] == "REQUESTS":
         for i in range(5):
@@ -70,12 +82,20 @@ def get_data(data:dict[str])-> tuple[np.array]:
                                         num_float_cols=int(data["num_float_cols"]),
                                         encoding=data["encoding"]
                                         )
+                log_file(name = data["name"], logging_datetime = scraper.scraping_time, success = True)
                 return (scraper.column_names, scraper.data_array, scraper.scraping_time)
             except RequestException:
                 time.sleep(30)
                 continue
-        res = np.array(["no data after five scraping trys."],dtype="S35")
-        return res, res, datetime.now()
+        log_file(name = data["name"], logging_datetime = datetime.now(), success = False)
+    
+def log_file(name:str, logging_datetime:datetime, success:bool)->None:
+    if success:
+        with open("log.txt","a+") as file:
+            file.write(f"Write \"{name}\" on database from \"{logging_datetime.isoformat()}\".\n")
+    else:
+        with open("log.txt","a+") as file:
+            file.write(f"Failure: Could not write \"{name}\" on database from \"{logging_datetime.isoformat()}\".\n")
 
     
 
