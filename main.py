@@ -1,4 +1,3 @@
-import io
 from datetime import date, datetime, timedelta
 import time
 import csv
@@ -12,9 +11,10 @@ PARENT_NAME = "webpages to be informed"
 DATA_PATH = "webpage_data.csv"
 COLUMN_NAMES = ["name","url","method","page_handler","cockie_handler",
                 "table_name", "is_german", "num_str_cols","num_float_cols","encoding"]
+LOG_FILE = "scrape.log"
 
 def main():
-    with open("log.txt","a+") as file:
+    with open(LOG_FILE,"a+") as file:
         file.write(f"Script executed at \"{datetime.now().isoformat()}\":\n")
     prozessing_time = datetime.combine(date.today(), datetime.min.time()) + timedelta(hours=11, minutes=38)
     while True:
@@ -91,10 +91,10 @@ def get_data(data:dict[str])-> tuple[np.array]:
     
 def log_file(name:str, logging_datetime:datetime, success:bool)->None:
     if success:
-        with open("log.txt","a+") as file:
+        with open(LOG_FILE,"a+") as file:
             file.write(f"Write \"{name}\" on database from \"{logging_datetime.isoformat()}\".\n")
     else:
-        with open("log.txt","a+") as file:
+        with open(LOG_FILE,"a+") as file:
             file.write(f"Failure: Could not write \"{name}\" on database from \"{logging_datetime.isoformat()}\".\n")
 
     
