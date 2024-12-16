@@ -35,7 +35,7 @@ def main():
             break
 
 
-def collect():
+def collect()->None:
 
     wp_data = {}
 
