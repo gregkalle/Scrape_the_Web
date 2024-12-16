@@ -11,7 +11,7 @@ PARENT_NAME = "webpages to be informed"
 DATA_PATH = "webpage_data.csv"
 COLUMN_NAMES = ["name","url","method","page_handler","cockie_handler",
                 "table_name", "is_german", "num_str_cols","num_float_cols","encoding"]
-LOG_FILE = "scrape.log"
+LOG_FILE = "DOC/scrape.log"
 
 def main():
     with open(LOG_FILE,"a+") as file:
