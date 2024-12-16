@@ -30,7 +30,7 @@ def main():
             continue
         if user_respond[0].upper() == "Y":
             with open(LOG_FILE,"a+") as file:
-                file.write(f"TERMINATED at \"{datetime.now().isoformat()}\":\n")
+                file.write(f"TERMINATED at \"{datetime.now().isoformat()}\":\n\n")
             print("Process terminated.")
             break
 
