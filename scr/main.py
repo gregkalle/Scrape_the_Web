@@ -6,6 +6,7 @@ from requests import RequestException
 from requests_scraper import RequestsScraper
 from selenium_scraper import SeleniumScraper
 from data_collector import DataCollector
+from functions import user_input
 
 PARENT_NAME = "webpages to be informed"
 DATA_PATH = "data/webpage_data.csv"
@@ -15,7 +16,7 @@ LOG_FILE = "doc/scrape.log"
 
 def main():
     with open(LOG_FILE,"a+") as file:
-        file.write(f"Script executed at \"{datetime.now().isoformat()}\":\n")
+        file.write(f"EXECUTED at \"{datetime.now().isoformat()}\":\n")
     prozessing_time = datetime.combine(date.today(), datetime.min.time()) + timedelta(hours=11, minutes=38)
     while True:
         if datetime.now() < prozessing_time:
@@ -23,6 +24,16 @@ def main():
             time.sleep((prozessing_time-datetime.now()).total_seconds())
         prozessing_time = prozessing_time + timedelta(days=1)
         collect()
+        try:
+            user_respond = user_input(prompt="Do you want to exit the script? Y/N", timeout=(prozessing_time-datetime.now()).total_seconds())
+        except TimeoutError:
+            continue
+        if user_respond[0].upper() == "Y":
+            with open(LOG_FILE,"a+") as file:
+                file.write(f"TERMINATED at \"{datetime.now().isoformat()}\":\n")
+            print("Process terminated.")
+            break
+
 
 def collect():
 

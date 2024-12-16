@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from time import mktime
+import threading
 
 def get_float(text:str)->float:
     digits = "".join([letter for letter in text if letter.isdigit() or letter in [".","-"]])
@@ -22,3 +23,18 @@ def get_start_end_time(day:date=None)->tuple[int]:
     end = int(mktime(end.timetuple())) - 1
     start = int(mktime(start.timetuple()))
     return start,end
+
+#timeouted userinput
+def user_input(prompt, timeout):
+    def time_up():
+        raise TimeoutError
+
+    timer = threading.Timer(timeout, time_up)
+    timer.start()
+
+    try:
+        user_response = input(prompt)
+        timer.cancel()
+        return user_response
+    except TimeoutError as exc:
+        raise TimeoutError() from exc
