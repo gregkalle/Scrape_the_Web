@@ -6,32 +6,34 @@ from functions import get_float, get_point_deci, get_start_end_time
 from scraper import Scraper
 
 class RequestsScraper(Scraper):
-    """_summary_
+    """A concrete implementation of the Scraper abstract base class using Requests and BeautifulSoup for web scraping.
 
     Args:
-            name (str): _description_
-            url (str): _description_
-            table_class_name (str): _description_
-            is_german (bool): _description_
-            num_string_cols (int): _description_
-            num_float_cols (int): _description_
-    Properties:
-            name(str): name of the scraper
-            scraping_time(datetime.datetime): time the webpage was scraped
-            column_names(np.array): column name data
-            data_array(np.array): table data
+        name (str): The name of the scraped webpage.
+        url (str): The URL to scrape data from.
+        table_class_name (str): The class name of the table to scrape.
+        is_german (bool): Whether the data is in German format (affects number parsing).
+        num_string_cols (int): The number of string columns in the table.
+        num_float_cols (int): The number of float columns in the table.
+        encoding (str, optional): The encoding of the data. Defaults to None.
+
+    Attributes:
+        name (str): The name of the scraped webpage.
+        scraping_time (datetime.datetime): The time when the data was scraped.
+        column_names (np.array): The column names of the data as a numpy array.
+        data_array (np.array): The data collected from the webpage as a numpy array.
     """
 
     def __init__(self,name:str, url:str, table_class_name:str, is_german:bool, num_string_cols:int, num_float_cols:int, encoding:str = None):
-        self.__name = name
+        self.__name:str = name
         start, end = get_start_end_time()
         url.replace("START",str(start)).replace("END",str(end))
         if encoding is None:
             encoding = "UTF-8"
         table = RequestsScraper.get_table(url=url,table_name=table_class_name)
-        self.__scraping_time = datetime.now()
-        self.__column_names = RequestsScraper.get_column_names(table=table,encoding=encoding)
-        self.__data_array = RequestsScraper.get_table_data(table=table,
+        self.__scraping_time:datetime = datetime.now()
+        self.__column_names:np.array = RequestsScraper.get_column_names(table=table,encoding=encoding)
+        self.__data_array:np.array = RequestsScraper.get_table_data(table=table,
                                                          num_string_cols=num_string_cols,
                                                          num_float_cols=num_float_cols,
                                                          is_german=is_german,
@@ -56,11 +58,11 @@ class RequestsScraper(Scraper):
 
     @staticmethod
     def get_table(url:str, table_name:str)->element.Tag:
-        """Returns the table with table name of the webpage with given url.
+        """Returns the table with the specified class name from the webpage with the given URL.
 
         Args:
-            url (str): the url of the webpage
-            table_name (str): Class name of the table
+            url (str): the URL of the webpage
+            table_name (str): The class name of the table.
 
         Raises:
             requests.Timeout: Requests timeout.
@@ -68,7 +70,7 @@ class RequestsScraper(Scraper):
             requests.RequestException: Request Exception
 
         Returns:
-            element.Tag: the table of the website which want to be scraped
+            element.Tag: The table element from the webpage.
         """
         try:
             page = requests.get(url=url,timeout=10)
@@ -85,13 +87,14 @@ class RequestsScraper(Scraper):
 
     @staticmethod
     def get_column_names(table:element.Tag, encoding:str)->np.array:
-        """_summary_
+        """Retrieves the column names from the table.
 
         Args:
-            table (element.Tag): _description_
+            table (element.Tag): The table element.
+            encoding (str): The encoding of the data.
 
         Returns:
-            np.array: column names
+            np.array: The column names.
         """
         head = table.find("thead")
         column_names = [str(name.getText(strip=True)).encode(encoding=encoding) for name in head.find_all("th")]
@@ -101,16 +104,17 @@ class RequestsScraper(Scraper):
 
     @staticmethod
     def get_table_data(table:element.Tag, num_string_cols:int, num_float_cols:int, is_german:bool, encoding:str)->np.array:
-        """_summary_
+        """Retrieves the data from the table.
 
         Args:
-            table (element.Tag): _description_
-            num_string_cols (int): _description_
-            num_float_cols (int): _description_
-            is_german (bool): _description_
+            table (element.Tag): The table element.
+            num_string_cols (int): The number of string columns in the table.
+            num_float_cols (int): The number of float columns in the table.
+            is_german (bool): Whether the data is in German format.
+            encoding (str): The encoding of the data.
 
         Returns:
-            np.array: table data
+            np.array: The table data.
         """
 
         data=[]
