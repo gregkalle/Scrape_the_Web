@@ -14,17 +14,25 @@ PARENT_NAME:str ="webpages to be informed"
 PATH:str = "data/webpage_data.h5"
 
 class DataCollector:
+    """
+    A class to collect and store data from various web pages into an HDF5 file.
+
+    Args:
+        path (str, optional): The path to the HDF5 file. Defaults to PATH.
+        parent_name (str, optional): The name of the parent group in the HDF5 file. Defaults to PARENT_NAME.
+        group_names (dict[str, str], optional): A dictionary of group names and their URLs. Defaults to GROUP_NAMES.
+    """
 
     def __init__(self, path:str = None,parent_name:str = None, group_names:dict[str:str]=None):
         if path is None:
             path = PATH
-        self.path = path
+        self.path:str = path
         if parent_name is None:
             parent_name = PARENT_NAME
-        self.parent_name = parent_name
+        self.parent_name:str = parent_name
         if group_names is None:
             group_names = GROUP_NAMES
-        self.group_names = group_names
+        self.group_names:str = group_names
 
         with h5py.File(self.path,"a") as file:
 
