@@ -8,10 +8,10 @@ from scr.selenium_scraper import SeleniumScraper
 from scr.data_collector import DataCollector
 
 PARENT_NAME = "webpages to be informed"
-DATA_PATH = "webpage_data.csv"
+DATA_PATH = "data/webpage_data.csv"
 COLUMN_NAMES = ["name","url","method","page_handler","cockie_handler",
                 "table_name", "is_german", "num_str_cols","num_float_cols","encoding"]
-LOG_FILE = "DOC/scrape.log"
+LOG_FILE = "doc/scrape.log"
 
 def main():
     with open(LOG_FILE,"a+") as file:

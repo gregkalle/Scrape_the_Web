@@ -11,7 +11,7 @@ GROUP_NAMES:dict[str:str] = {"SMARD.DE":"https://www.smard.de/",
                              "dwd":"https://www.dwd.de"
                             }
 PARENT_NAME:str ="webpages to be informed"
-PATH:str = "webpage_data.h5"
+PATH:str = "data/webpage_data.h5"
 
 class DataCollector:
 
