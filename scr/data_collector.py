@@ -169,7 +169,7 @@ class DataCollector:
                 group = file[self.parent_name][group_name]
             except KeyError as exc:
                 raise ValueError(f"No group \"{self.parent_name}/{group_name}\" in database.")
-            return {date.fromtimestamp(float(name)) : group[name][()] for name in group.keys() if name in last_weeks_dates}
+            return dict(sorted({date.fromtimestamp(float(name)) : group[name][()] for name in group.keys() if name in last_weeks_dates}.items()))
 
     def is_saved_data(self, group_name:str, data_date:date)->bool:
         """Checks if data for the specified date is saved in the group.
