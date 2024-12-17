@@ -12,3 +12,6 @@ reas1.py
 
 #data
 data/
+
+#vscode
+.vscode/
