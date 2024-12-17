@@ -1,11 +1,7 @@
-import time
-from datetime import date, timedelta
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from scr.data_collector import DataCollector
-from scr.selenium_scraper import SeleniumScraper
 import numpy as np
-import h5py
 
 GROUP_NAMES:dict[str:str] = {"SMARD.DE":"https://www.smard.de/",
                              "finance.yahoo.com":"https://finance.yahoo.com",
@@ -13,7 +9,7 @@ GROUP_NAMES:dict[str:str] = {"SMARD.DE":"https://www.smard.de/",
                              "dwd":"https://www.dwd.de"
                             }
 PARENT_NAME = "webpages to be informed"
-PATH:str = "webpage_data.h5"
+PATH:str = "data/webpage_data.h5"
 
 def main():
     data_collector = DataCollector(path=PATH,parent_name=PARENT_NAME,group_names=GROUP_NAMES)
