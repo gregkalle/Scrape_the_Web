@@ -1,7 +1,9 @@
+from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from scr.data_collector import DataCollector
 import numpy as np
+import seaborn as sns
+from scr.data_collector import DataCollector
 
 GROUP_NAMES:dict[str:str] = {"SMARD.DE":"https://www.smard.de/",
                              "finance.yahoo.com":"https://finance.yahoo.com",
@@ -12,23 +14,30 @@ PARENT_NAME = "webpages to be informed"
 PATH:str = "data/webpage_data.h5"
 
 def main():
+    
     data_collector = DataCollector(path=PATH,parent_name=PARENT_NAME,group_names=GROUP_NAMES)
 
 
-    #column = np.strings.decode(data_collector.get_column_names(group_name="dwd"),encoding="iso-8859-1")
-    #for name in GROUP_NAMES:
-        #print(data_collector.get_data(name))
+    #data smard.de column number 5 ("f1" no.3)
+    field_name, column_number = "f1", 3
+    group_name=[key for key in GROUP_NAMES.keys()][0]
+    data_name = data_collector.get_column_names(group_name=group_name)
+    
+    data_dict = data_collector.get_last_days_group_data(group_name=group_name)
 
-    #array1 = np.strings.decode(array["f0"], encoding="iso-8859-1")
+    data_to_show = np.concatenate([data_dict[key][field_name][:,column_number] for key in data_dict.keys()])
 
- 
-          
-    data_collector = DataCollector(path=PATH,parent_name=PARENT_NAME,group_names=GROUP_NAMES)
+    dates = list(data_dict.keys())
+    y_value = []
+    for date_ in dates:
+        y_value += [datetime.combine(date_,datetime.min.time()) + i * timedelta(hours=1) for i in range(24)]
 
-    for name in GROUP_NAMES:
-        columns = data_collector.get_column_names(group_name=name)
-        print(columns)
+    print(y_value)
+    print(data_to_show)
 
+
+        
+    """
     data = data_collector.get_last_days_group_data(group_name="SMARD.DE")
 
     print(data)
@@ -43,14 +52,15 @@ def main():
     data_array = np.column_stack([data[day]["f1"][:,0] for day in days])
 
     print(data_array)
-
+    """
     
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d.%m.%Y'))
     plt.gca().xaxis.set_major_locator(mdates.DayLocator())
-    plt.plot(days,data_array[5,:],marker="o",linewidth=1.0)
+    plt.subplot().vlines(x=dates,ymin=min(data_to_show),ymax=max(data_to_show),linestyles="dashed")
+    plt.plot(y_value,data_to_show,marker="o",linewidth=1.0)
     plt.gcf().autofmt_xdate()
-    plt.xlabel("Date")
-    plt.ylabel("Value")
+    plt.xlabel("Time")
+    plt.ylabel(str(data_name[5]).replace("\\n"," "))
     plt.show()
     
 
