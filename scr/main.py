@@ -15,6 +15,10 @@ COLUMN_NAMES = ["name","url","method","page_handler","cockie_handler",
 LOG_FILE = "doc/scrape.log"
 
 def main():
+    """
+    Main function to execute the data collection process.
+    
+    """
     with open(LOG_FILE,"a+") as file:
         file.write(f"EXECUTED at \"{datetime.now().isoformat()}\":\n")
     prozessing_time = datetime.combine(date.today(), datetime.min.time()) + timedelta(hours=11, minutes=38)
@@ -36,7 +40,9 @@ def main():
 
 
 def collect()->None:
-
+    """
+    Collects data from specified web pages and stores it in the data collector.
+    """
     wp_data = {}
 
     with open(DATA_PATH, encoding="utf-8-sig") as wp_data_file:
@@ -65,6 +71,15 @@ def collect()->None:
             print(f"{key} is saved in database at {str(date_today)}.")
 
 def get_data(data:dict[str])-> tuple[np.array]:
+    """
+    Retrieves data using the specified method (Selenium or Requests).
+
+    Args:
+        data (dict[str]): The data configuration dictionary.
+
+    Returns:
+        tuple[np.array]: The column names, data array, and scraping time.
+    """
     if data["method"] == "SELENIUM":
         for i in range(5):
             try:
