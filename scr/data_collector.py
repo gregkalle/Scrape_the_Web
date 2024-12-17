@@ -49,8 +49,20 @@ class DataCollector:
                     group.attrs["initialisation_date"] = date.today().timetuple()
 
     def store_column_names(self,column_names:np.array,group_name:str)->None:
+        """Stores the column names in the specified group.
+
+        Args:
+            column_names (np.array): The column names to store.
+            group_name (str): The name of the group to store the column names in.
+
+        Raises:
+            ValueError: If group_name not in database.
+        """
         with h5py.File(self.path, "a") as file:
-            group = file[self.parent_name][group_name]
+            try:
+                group = file[self.parent_name][group_name]
+            except KeyError as exc:
+                raise ValueError(f"No group \"{self.parent_name}/{group_name}\" in database.")
             if not "column_names" in group.keys():
                 column_names = column_names
                 dataset = group.create_dataset(name="column_names",data=column_names,
@@ -60,7 +72,17 @@ class DataCollector:
 
 
     def store_data(self, data:np.array, group_name:str, scraping_time: datetime, data_date:date = None)-> None:
-        
+        """Stores the data in the specified group.
+
+        Args:
+            data (np.array): The data to store.
+            group_name (str): The name of the group to store the data in.
+            scraping_time (datetime): The time when the data was scraped.
+            data_date (date, optional): The date of the data. Defaults to today.
+
+        Raises:
+            ValueError: If group_name not in database.
+        """
         if data_date is None:
             data_date = date.today()
 
@@ -68,7 +90,10 @@ class DataCollector:
 
         with h5py.File(self.path, "a") as file:
             
-            group = file[self.parent_name][group_name]
+            try:
+                group = file[self.parent_name][group_name]
+            except KeyError as exc:
+                raise ValueError(f"No group \"{self.parent_name}/{group_name}\" in database.")
 
             if not data_name in group.keys():
                 dataset = group.create_dataset(name=data_name,data=data,
@@ -77,39 +102,113 @@ class DataCollector:
                 dataset.attrs["inititialisation"] = data_date.timetuple()
 
     def get_data(self, group_name:str, data_date:date = None)->np.array:
-        
+        """
+        Retrieves the data from the specified group and date.
+
+        Args:
+            group_name (str): The name of the group to retrieve data from.
+            data_date (date, optional): The date of the data. Defaults to today.
+
+        Returns:
+            np.array: The retrieved data.
+
+        Raises:
+            ValueError: If group_name not in database.
+            ValueError: If no dataset is found for the specified date.
+        """
         if data_date is None:
             data_date = date.today()
         data_name = str(time.mktime(data_date.timetuple()))
         with h5py.File(self.path, "r") as file:
-            group = file[self.parent_name][group_name]
+            try:
+                group = file[self.parent_name][group_name]
+            except KeyError as exc:
+                raise ValueError(f"No group \"{self.parent_name}/{group_name}\" in database.")
             if data_name in group.keys():
                 return group[data_name][()]
             raise ValueError("No dataset in database.")
         
     def get_column_names(self, group_name:str)->np.array:
+        """ Retrieves the column names from the specified group.
+
+        Args:
+            group_name (str): The name of the group to retrieve column names from.
+
+        Raises:
+            ValueError: If group_name not in database.
+            ValueError: If no column names are found in the group.
+
+        Returns:
+            np.array: The column names.
+        """
         with h5py.File(self.path, "r") as file:
-            group = file[self.parent_name][group_name]
+            try:
+                group = file[self.parent_name][group_name]
+            except KeyError as exc:
+                raise ValueError(f"No group \"{self.parent_name}/{group_name}\" in database.")
             if "column_names" in group:
                 return group["column_names"][()]
             raise ValueError(f"No column names in group {group_name}.")
 
     def get_last_days_group_data(self, group_name:str, num_days:int = 7)->dict[date:np.array]:
+        """ Retrieves the data from the last specified number of days for the given group.
+
+        Raises:
+            ValueError: If group_name not in database.
+
+        Returns:
+            dict[date, np.array]: A dictionary of dates and their corresponding data.
+
+        Raises:
+            ValueError: If group_name not in database.
+        """
         last_weeks_dates = [str(time.mktime((date.today()-i*timedelta(days=1)).timetuple())) for i in range(num_days)]
 
         with h5py.File(self.path, "r") as file:
-            group = file[self.parent_name][group_name]
+            try:
+                group = file[self.parent_name][group_name]
+            except KeyError as exc:
+                raise ValueError(f"No group \"{self.parent_name}/{group_name}\" in database.")
             return {date.fromtimestamp(float(name)) : group[name][()] for name in group.keys() if name in last_weeks_dates}
 
     def is_saved_data(self, group_name:str, data_date:date)->bool:
+        """Checks if data for the specified date is saved in the group.
+
+        Args:
+            group_name (str): The name of the group to check.
+            data_date (date): The date of the data.
+
+        Raises:
+            ValueError: If group_name not in database.
+
+        Returns:
+            bool: True if the data is saved, False otherwise.
+        """
         if data_date is None:
             data_date = date.today()
         data_name = str(time.mktime(data_date.timetuple()))
         with h5py.File(self.path, "r") as file:
-            group = file[self.parent_name][group_name]
+            try:
+                group = file[self.parent_name][group_name]
+            except KeyError as exc:
+                raise ValueError(f"No group \"{self.parent_name}/{group_name}\" in database.")
             return data_name in group.keys()
         
     def is_saved_columns(self, group_name:str)->bool:
+        """Checks if column names are saved in the group.
+
+        Args:
+            group_name (str): The name of the group to check.
+
+        Raises:
+            ValueError: If group_name not in database.
+
+        Returns:
+            bool: True if the column names are saved, False otherwise.
+        """
         with h5py.File(self.path, "r") as file:
-            group = file[self.parent_name][group_name]
+            try:
+                group = file[self.parent_name][group_name]
+            except KeyError as exc:
+                raise ValueError(f"No group \"{self.parent_name}/{group_name}\" in database.")
             return "column_names" in group.keys()
