@@ -24,19 +24,19 @@ def main():
     prozessing_time = datetime.combine(date.today(), datetime.min.time()) + timedelta(hours=11, minutes=38)
     while True:
         if datetime.now() < prozessing_time:
+            try:
+                user_respond = user_input(prompt="Do you want to exit the script? Y/N", timeout=(prozessing_time-datetime.now()).total_seconds())
+            except TimeoutError:
+                continue
+            if user_respond[0].upper() == "Y":
+                with open(LOG_FILE,"a+") as file:
+                    file.write(f"TERMINATED at \"{datetime.now().isoformat()}\":\n\n")
+                print("Process terminated.")
+                break
             print(f"Sleep until {prozessing_time}")
             time.sleep((prozessing_time-datetime.now()).total_seconds())
         prozessing_time = prozessing_time + timedelta(days=1)
         collect()
-        try:
-            user_respond = user_input(prompt="Do you want to exit the script? Y/N", timeout=(prozessing_time-datetime.now()).total_seconds())
-        except TimeoutError:
-            continue
-        if user_respond[0].upper() == "Y":
-            with open(LOG_FILE,"a+") as file:
-                file.write(f"TERMINATED at \"{datetime.now().isoformat()}\":\n\n")
-            print("Process terminated.")
-            break
 
 
 def collect()->None:
@@ -93,7 +93,7 @@ def get_data(data:dict[str])-> tuple[np.array]:
                 log_file(name = data["name"], logging_datetime = scraper.scraping_time, success = True)
                 return (scraper.column_names, scraper.data_array, scraper.scraping_time)
             # Warning: unspecified error handling. 
-            except:
+            except Exception:
                 time.sleep(30)
                 continue
         log_file(name = data["name"], logging_datetime = datetime.now(), success = False)
