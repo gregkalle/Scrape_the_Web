@@ -121,8 +121,8 @@ class RequestsScraper(Scraper):
         for row in table.find("tbody").find_all("tr"):
             string_data = []
             float_data = []
-            for i,element in enumerate(row.find_all("td")):
-                text = list(element.stripped_strings)[0] if element.getText(strip=True) else ""
+            for i,cell in enumerate(row.find_all("td")):
+                text = list(cell.stripped_strings)[0] if cell.getText(strip=True) else ""
                 if i<num_string_cols:
                     string_data.append(text.encode(encoding=encoding))
                 elif i>= num_string_cols:
