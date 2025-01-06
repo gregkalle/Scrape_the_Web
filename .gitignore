@@ -12,7 +12,7 @@ reas1.py
 plotting.py
 
 #data
-data/
+*.h5
 
 #vscode
 .vscode/
