@@ -1,6 +1,5 @@
 from datetime import date, timedelta
 from time import mktime
-import threading
 
 def get_float(text:str)->float:
     """Converts a string to a float, extracting digits and handling errors.
@@ -51,30 +50,3 @@ def get_start_end_time(day:date=None)->tuple[int]:
     end = int(mktime(end.timetuple())) - 1
     start = int(mktime(start.timetuple()))
     return start,end
-
-#timeouted userinput
-def user_input(prompt:str, timeout:int)->str:
-    """Prompts the user for input with a timeout.
-
-    Args:
-        prompt (str): The input prompt.
-        timeout (int): The timeout duration in seconds.
-
-    Returns:
-        str: The user's input.
-
-    Raises:
-        TimeoutError: If the input times out.
-    """
-    def time_up():
-        raise TimeoutError
-
-    timer = threading.Timer(timeout, time_up)
-    timer.start()
-
-    try:
-        user_response = input(prompt)
-        timer.cancel()
-        return user_response
-    except TimeoutError as exc:
-        raise TimeoutError() from exc

@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta
+import sys
 import time
 import csv
 import numpy as np
@@ -6,7 +7,7 @@ from requests import RequestException
 from requests_scraper import RequestsScraper
 from selenium_scraper import SeleniumScraper
 from data_collector import DataCollector
-from functions import user_input
+from inputimeout import inputimeout, TimeoutOccurred
 
 PARENT_NAME = "webpages to be informed"
 DATA_PATH = "data/webpage_data.csv"
@@ -21,20 +22,17 @@ def main():
     """
     with open(LOG_FILE,"a+") as file:
         file.write(f"EXECUTED at \"{datetime.now().isoformat()}\":\n")
-    prozessing_time = datetime.combine(date.today(), datetime.min.time()) + timedelta(hours=11, minutes=38)
+    prozessing_time = datetime.combine(date.today(), datetime.min.time()) + timedelta(hours=10, minutes=00)
     while True:
         if datetime.now() < prozessing_time:
             try:
-                user_respond = user_input(prompt="Do you want to exit the script? Y/N", timeout=(prozessing_time-datetime.now()).total_seconds())
-            except TimeoutError:
+                inputimeout(prompt="To terminate prozess, insert anything", timeout=(prozessing_time-datetime.now()).total_seconds())
+            except TimeoutOccurred:
                 continue
-            if user_respond[0].upper() == "Y":
-                with open(LOG_FILE,"a+") as file:
-                    file.write(f"TERMINATED at \"{datetime.now().isoformat()}\":\n\n")
-                print("Process terminated.")
-                break
-            print(f"Sleep until {prozessing_time}")
-            time.sleep((prozessing_time-datetime.now()).total_seconds())
+            with open(LOG_FILE,"a+") as file:
+                file.write(f"TERMINATED at \"{datetime.now().isoformat()}\":\n\n")
+            print("Process terminated.")
+            sys.exit()
         prozessing_time = prozessing_time + timedelta(days=1)
         collect()
 
